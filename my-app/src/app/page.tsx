@@ -7,20 +7,19 @@ import {
   Float,
   PerspectiveCamera,
   Environment,
+  ContactShadows,
 } from "@react-three/drei";
 import * as THREE from "three";
 
-const Petal = ({ rotation, delay, scale }: any) => {
-  const meshRef = useRef<THREE.Mesh>(null!);
-
+const Petal = ({ rotation, scale }: any) => {
   return (
-    <mesh ref={meshRef} rotation={rotation} scale={scale}>
-      <sphereGeometry args={[1, 32, 32, 0, Math.PI / 2, 0, Math.PI / 2]} />
+    <mesh rotation={rotation} scale={scale}>
+      <sphereGeometry args={[1, 32, 32, 0, Math.PI / 1.5, 0, Math.PI / 1.5]} />
       <meshStandardMaterial
         color="#1e40af"
-        emissive="#000033"
-        roughness={0.4}
-        metalness={0.1}
+        emissive="#000022"
+        roughness={0.3}
+        metalness={0.2}
         side={THREE.DoubleSide}
       />
     </mesh>
@@ -32,15 +31,14 @@ const RealisticRose = () => {
 
   const petals = useMemo(() => {
     const items = [];
-
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 30; i++) {
       items.push({
         rotation: [
-          Math.PI / (1.5 + Math.random()),
-          (i * Math.PI) / 3,
-          (Math.random() - 0.5) * 0.5,
+          Math.PI / (1.2 + Math.random() * 0.5),
+          (i * Math.PI * 2) / 8,
+          (Math.random() - 0.5) * 0.3,
         ] as [number, number, number],
-        scale: (0.5 + i * 0.05) as number,
+        scale: (0.4 + i * 0.04) as number,
       });
     }
     return items;
@@ -49,14 +47,14 @@ const RealisticRose = () => {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (groupRef.current) {
-      groupRef.current.rotation.y = t * 0.15;
+      groupRef.current.rotation.y = t * 0.4;
     }
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} position={[0, 1, 0]}>
       <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.3, 32, 32]} />
+        <sphereGeometry args={[0.2, 32, 32]} />
         <meshStandardMaterial color="#0f172a" />
       </mesh>
 
@@ -64,18 +62,17 @@ const RealisticRose = () => {
         <Petal key={i} {...props} />
       ))}
 
-      {/* Иш */}
-      <mesh position={[0, -3.2, 0]}>
-        <cylinderGeometry args={[0.05, 0.03, 6]} />
+      <mesh position={[0, -3, 0]}>
+        <cylinderGeometry args={[0.04, 0.02, 6, 12]} />
         <meshStandardMaterial color="#064e3b" />
       </mesh>
 
-      <mesh position={[0.5, -1.5, 0]} rotation={[0, 0, Math.PI / 3]}>
-        <sphereGeometry args={[0.4, 16, 16]} scale={[1, 0.05, 0.4]} />
+      <mesh position={[0.4, -1.2, 0]} rotation={[0.4, 0, Math.PI / 2.5]}>
+        <sphereGeometry args={[0.5, 16, 16]} scale={[1, 0.05, 0.3]} />
         <meshStandardMaterial color="#065f46" />
       </mesh>
-      <mesh position={[-0.5, -2.5, 0]} rotation={[0, 0, -Math.PI / 3]}>
-        <sphereGeometry args={[0.4, 16, 16]} scale={[1, 0.05, 0.4]} />
+      <mesh position={[-0.4, -2.2, 0]} rotation={[-0.4, 0, -Math.PI / 2.5]}>
+        <sphereGeometry args={[0.5, 16, 16]} scale={[1, 0.05, 0.3]} />
         <meshStandardMaterial color="#065f46" />
       </mesh>
     </group>
@@ -84,48 +81,60 @@ const RealisticRose = () => {
 
 export default function Home() {
   return (
-    <div className="w-full h-screen bg-black overflow-hidden relative">
-      <div className="absolute top-10 w-full text-center z-10">
-        <h1 className="text-blue-500 text-2xl font-extralight tracking-[1em] opacity-50 uppercase">
-          Midnight Rose
-        </h1>
-      </div>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "#020617",
+      }}
+    >
+      <Canvas shadows dpr={[1, 2]}>
+        <PerspectiveCamera makeDefault position={[0, 0, 12]} fov={35} />
 
-      <Canvas shadows>
-        <PerspectiveCamera makeDefault position={[0, 2, 10]} fov={35} />
-
-        <ambientLight intensity={0.2} />
+        <ambientLight intensity={0.4} />
         <spotLight
           position={[10, 10, 10]}
           angle={0.15}
           penumbra={1}
-          intensity={2}
+          intensity={150}
           color="#3b82f6"
+          castShadow
         />
-        <pointLight position={[-10, -5, -5]} intensity={1} color="#1e3a8a" />
+        <pointLight position={[-10, -5, -10]} intensity={50} color="#1e3a8a" />
 
         <Environment preset="night" />
 
-        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+        <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
           <RealisticRose />
         </Float>
 
+        <ContactShadows
+          position={[0, -4.5, 0]}
+          opacity={0.4}
+          scale={10}
+          blur={2.5}
+          far={4}
+        />
+
         <Sparkles
-          count={200}
-          scale={8}
-          size={0.5}
-          speed={0.4}
+          count={120}
+          scale={10}
+          size={0.6}
+          speed={0.3}
           color="#60a5fa"
         />
 
         <OrbitControls
           enableZoom={false}
-          minPolarAngle={Math.PI / 3}
+          enablePan={false}
+          minPolarAngle={Math.PI / 2.5}
           maxPolarAngle={Math.PI / 1.5}
         />
       </Canvas>
 
-      <div className="absolute bottom-0 w-full h-32 bg-gradient-to-t from-blue-900/20 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 w-full h-64 bg-gradient-to-t from-blue-950/40 to-transparent pointer-events-none" />
     </div>
   );
 }
